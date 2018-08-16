@@ -11,8 +11,9 @@
   "dependencies": {
     "defaults": "^1.0.3",
     "express": "^4.16.3",
-    "express-queue": "0.0.12",
     "express-rate-limit": "^2.12.2",
-    "web3": "^1.0.0-beta.35"
+    "lodash": "^4.17.10",
+    "web3": "^1.0.0-beta.35",
+    "workerpool": "^2.3.1"
   }
 }

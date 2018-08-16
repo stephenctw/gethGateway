@@ -40,15 +40,15 @@
 
 #API usage
 
-// get nodeInfo
-// GET:http://localhost:{port}/node
-// get block by block number
-// GET:http://localhost:{port}/block/{block_number}
-// get transaction by transaction hash
-// GET:http://localhost:{port}/transaction/{transation_hash}
-// send transaction
-// POST:http://localhost:{port}/transaction?from={from}&to={to}&value={value}
-// start miner
-// PUT:http://localhost:{port}/miner
-// stop miner
-// DELETE:http://localhost:{port}/miner
+**get nodeInfo**
+GET:http://localhost:{port}/node
+**get block by block number**
+GET:http://localhost:{port}/block/{block_number}
+**get transaction by transaction hash**
+GET:http://localhost:{port}/transaction/{transation_hash}
+**send transaction**
+POST:http://localhost:{port}/transaction?from={from}&to={to}&value={value}
+**start miner**
+PUT:http://localhost:{port}/miner
+**stop miner**
+DELETE:http://localhost:{port}/miner
