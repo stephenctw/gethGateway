@@ -1,8 +1,8 @@
-#Prerequisite
-1. Have [Geth]https://github.com/ethereum/go-ethereum) installed
+# Prerequisite #
+1. Have [Geth](https://github.com/ethereum/go-ethereum) installed
 2. Have [Node JS](https://nodejs.org/en/) installed
 
-#How to use
+# How to use #
 1. Run Geth and take note of the IPC endpoint.
 2. Open config.json and modify values per needs.
 ```json
@@ -33,22 +33,37 @@
 		"delayMs": "0",
 		"message": "Too many accounts created from this IP, please try again after 15 minutes"
 	}
+	"worker":{
+		"minWorkers": 1,
+		"maxWorkers": 1
+	}
 }
 ```
 3. Double click **restore.cmd** to resotre node packages.
 4. Double click **start.cmd** to start Geth Gateway.
 
-#API usage
+# API usage #
 
 **get nodeInfo**
+
 GET:http://localhost:{port}/node
+
 **get block by block number**
+
 GET:http://localhost:{port}/block/{block_number}
+
 **get transaction by transaction hash**
+
 GET:http://localhost:{port}/transaction/{transation_hash}
+
 **send transaction**
+
 POST:http://localhost:{port}/transaction?from={from}&to={to}&value={value}
+
 **start miner**
+
 PUT:http://localhost:{port}/miner
+
 **stop miner**
+
 DELETE:http://localhost:{port}/miner
