@@ -13,25 +13,25 @@
 		"windowMs": "900000", // Time windows in ms, 900000ms = 15*60*1000ms = 15 minutes.
 		"max": "10", // Maximum requests allowed in the given time window.
 		"delayMs": "0",
-		"message": "Too many accounts created from this IP, please try again after 15 minutes" // Message to send when maximum requests reached.
+		"message": "Too many requests sent from this IP, please try again after 15 minutes" // Message to send when maximum requests reached.
 	},
 	"blockLimit":{  // This is the configuration of API rate limit for get block.
 		"windowMs": "900000",
 		"max": "10",
 		"delayMs": "0",
-		"message": "Too many accounts created from this IP, please try again after 15 minutes"
+		"message": "Too many requests sent from this IP, please try again after 15 minutes"
 	},
 	"transactionLimit":{  // This is the configuration of API rate limit for get transaction or send transaction.
 		"windowMs": "900000",
 		"max": "10",
 		"delayMs": "0",
-		"message": "Too many accounts created from this IP, please try again after 15 minutes"
+		"message": "Too many requests sent from this IP, please try again after 15 minutes"
 	},
 	"minerLimit":{  // This is the configuration of API rate limit for start miner or stop miner.
 		"windowMs": "900000",
 		"max": "10",
 		"delayMs": "0",
-		"message": "Too many accounts created from this IP, please try again after 15 minutes"
+		"message": "Too many requests sent from this IP, please try again after 15 minutes"
 	}
 	"worker":{
 		"minWorkers": 1,

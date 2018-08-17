@@ -55,10 +55,10 @@ function validateWorker(worker){
 	if(!lodash.isObject(worker)){
 		return false;
 	}
-	if(!worker.hasOwnProperty('minWorkers') || !lodash.isNumber(limit.minWorkers)){
+	if(!worker.hasOwnProperty('minWorkers') || !lodash.isNumber(worker.minWorkers)){
 		return false;
 	}
-	if(!worker.hasOwnProperty('maxWorkers') || !lodash.isNumber(limit.maxWorkers)){
+	if(!worker.hasOwnProperty('maxWorkers') || !lodash.isNumber(worker.maxWorkers)){
 		return false;
 	}
 	return true;
@@ -83,7 +83,7 @@ function validateConfiguration() {
 	if(!config.hasOwnProperty('minerLimit') || !validateRateLimit(config.minerLimit)){
 		config.minerLimit = defaultLimit;
 	}
-	if(!config.hasOwnProperty('worker') || !validateRateLimit(config.worker)){
+	if(!config.hasOwnProperty('worker') || !validateWorker(config.worker)){
 		config.worker = defaultWorker;
 	}
 }
