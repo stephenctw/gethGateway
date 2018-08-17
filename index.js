@@ -8,47 +8,122 @@ const workerpool = require("workerpool");
 const defaults = require("defaults");
 const lodash = require("lodash");
 
-// read configuration, and check values, reset to default if not invalid
+// constants
+const defaultPort = 3000;
+const defaultRpc = "\\\\.\\pipe\\geth.ipc";
 const defaultLimit = {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10,
     delayMs: 0, // disabled
-    message: "Too many accounts created from this IP, please try again after 15 minutes"
+    message: "Too many requests sent from this IP, please try again after 15 minutes"
 };
 const defaultWorker = {
     minWorkers: 1,
     maxWorkers: 1
 };
 const defaultConfig = {
-    port: 3000,
-    ipc: "\\\\.\\pipe\\geth.ipc",
+    port: defaultPort,
+    rpc: defaultRpc,
     nodeLimit: defaultLimit,
     blockLimit: defaultLimit,
     transactionLimit: defaultLimit,
     minerLimit: defaultLimit,
     worker: defaultWorker
 };
-try {
-    var config = defaults(JSON.parse(fs.readFileSync("config.json", "utf8")), defaultConfig);
+
+// functions to validate configurations
+function validateRateLimit(limit){
+	if(!lodash.isObject(limit)){
+		return false;
+	}
+	if(!limit.hasOwnProperty('windowMs') || !lodash.isNumber(limit.windowMs)){
+		return false;
+	}
+	if(!limit.hasOwnProperty('max') || !lodash.isNumber(limit.max)){
+		return false;
+	}
+	if(!limit.hasOwnProperty('delayMs') || !lodash.isNumber(limit.delayMs)){
+		return false;
+	}
+	if(!limit.hasOwnProperty('message') || !lodash.isString(limit.message)){
+		return false;
+	}
+	return true;
 }
-catch (ex) {
-    console.log("config.json file not found, load default.");
-    var config = defaultConfig;
+
+function validateWorker(worker){
+	if(!lodash.isObject(worker)){
+		return false;
+	}
+	if(!worker.hasOwnProperty('minWorkers') || !lodash.isNumber(limit.minWorkers)){
+		return false;
+	}
+	if(!worker.hasOwnProperty('maxWorkers') || !lodash.isNumber(limit.maxWorkers)){
+		return false;
+	}
+	return true;
 }
 
-var pool = workerpool.pool(config.worker);
+function validateConfiguration() {
+    if (!lodash.isObject(config)) {
+        config = defaultConfig;
+    }
+    if (!config.hasOwnProperty('port') || !lodash.isNumber(config.port) || config.port > 65535 || config.port < 0) {
+        config.port = defaultPort;
+    }
+	if(!config.hasOwnProperty('nodeLimit') || !validateRateLimit(config.nodeLimit)){
+		config.nodeLimit = defaultLimit;
+	}
+	if(!config.hasOwnProperty('blockLimit') || !validateRateLimit(config.blockLimit)){
+		config.blockLimit = defaultLimit;
+	}
+	if(!config.hasOwnProperty('transactionLimit') || !validateRateLimit(config.transactionLimit)){
+		config.transactionLimit = defaultLimit;
+	}
+	if(!config.hasOwnProperty('minerLimit') || !validateRateLimit(config.minerLimit)){
+		config.minerLimit = defaultLimit;
+	}
+	if(!config.hasOwnProperty('worker') || !validateRateLimit(config.worker)){
+		config.worker = defaultWorker;
+	}
+}
 
-// use for Geth
-var web3 = new Web3(new Web3.providers.IpcProvider(config.ipc, net));
-web3.providers.IpcProvider.prototype.sendAsync = web3.providers.IpcProvider.prototype.send;
+// create web3 from rpc
+function web3Factory(rpc) {
+    if (rpc.length >= 4 && rpc.substring(0, 4) === 'http') {
+        var web3 = new Web3(new Web3.providers.HttpProvider(rpc));
+        web3.providers.HttpProvider.prototype.sendAsync = web3.providers.HttpProvider.prototype.send;
+    }
+    else {
+        var web3 = new Web3(new Web3.providers.IpcProvider(rpc, net));
+        web3.providers.IpcProvider.prototype.sendAsync = web3.providers.IpcProvider.prototype.send;
+    }
+    return web3;
+}
 
-// use for testing with Ganache
-//var web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545"));
-//web3.providers.HttpProvider.prototype.sendAsync = web3.providers.HttpProvider.prototype.send;
+// worker function to send Transaction
+function transactionWorker(rpc, data) {
+    const net = require("net");
+    const Web3 = require("web3");
+    let web3;
 
-app.listen(config.port, function () {
-    console.log(`Gateway app is running on port ${config.port}`);
-});
+    if (rpc.length >= 4 && rpc.substring(0, 4) === 'http') {
+        web3 = new Web3(new Web3.providers.HttpProvider(rpc));
+        web3.providers.HttpProvider.prototype.sendAsync = web3.providers.HttpProvider.prototype.send;
+    }
+    else {
+        web3 = new Web3(new Web3.providers.IpcProvider(rpc, net));
+        web3.providers.IpcProvider.prototype.sendAsync = web3.providers.IpcProvider.prototype.send;
+    }
+
+    web3.eth.sendTransaction(data)
+        .then(function (result) {
+            console.log(result);
+        })
+        .catch(function (error) {
+            console.error(error);
+        });
+}
 
 // Response format user get
 // user first check "success" flag
@@ -59,6 +134,24 @@ function Response(success, message, result) {
     this.message = message;
     this.result = result;
 }
+
+// program start from here
+// read configuration, and check values, set to default if not valid
+try {
+    var config = defaults(JSON.parse(fs.readFileSync("config.json", "utf8")), defaultConfig);
+}
+catch (ex) {
+    console.log("config.json file not found, load default.");
+    var config = defaultConfig;
+}
+validateConfiguration();
+
+var pool = workerpool.pool(config.worker);
+var web3 = web3Factory(config.rpc);
+
+app.listen(config.port, function () {
+    console.log(`Gateway app is running on port ${config.port}`);
+});
 
 app.get("/", new RateLimit(defaultLimit), function (req, res) {
     res.send("Welcome to Geth Gateway!");
@@ -120,11 +213,8 @@ app.get("/transaction/:transaction_hash", new RateLimit(config.transactionLimit)
 // POST:http://localhost:{port}/transaction?from={from}&to={to}&value={value}
 app.post("/transaction", new RateLimit(config.transactionLimit), function (req, res) {
     res.status(202).send(new Response(true, "", "Transaction sent."));
-	// todo: use worker pool here
-    web3.eth.sendTransaction(req.query)
-        .then(function (result) {
-            console.log(result);
-        })
+
+    pool.exec(transactionWorker, [config.rpc, req.query])
         .catch(function (error) {
             console.error(error);
         });
